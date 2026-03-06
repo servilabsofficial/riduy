@@ -7,10 +7,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── ENUMS ──────────────────────────────────────────────────────────────────────
+
 enum Role {
   ADMIN
   SELLER
   OPTOMETRIST
+  ACCOUNTANT
+  RECEPTIONIST
+  LAB_TECH
 }
 
 enum PaymentMethod {
@@ -39,20 +44,132 @@ enum ProductType {
   ACCESSORY
 }
 
-model User {
+enum PurchaseOrderStatus {
+  DRAFT
+  SENT
+  RECEIVED
+  CANCELLED
+}
+
+enum ExpenseCategory {
+  RENT
+  UTILITIES
+  SUPPLIES
+  SALARIES
+  MARKETING
+  MAINTENANCE
+  OTHER
+}
+
+enum NotificationType {
+  ORDER_READY
+  LOW_STOCK
+  APPOINTMENT_REMINDER
+  PAYMENT_DUE
+  COMMISSION
+  SYSTEM
+}
+
+enum CashMovementType {
+  INCOME
+  EXPENSE
+  ADJUSTMENT
+}
+
+// ─── BRANCH (Multi-Location) ────────────────────────────────────────────────────
+
+model Branch {
   id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
   name      String
-  role      Role     @default(SELLER)
+  address   String?
+  phone     String?
+  email     String?
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  sales        Sale[]
-  appointments Appointment[]
-  orders       Order[]
+  users          User[]
+  products       BranchProduct[]
+  cashRegisters  CashRegister[]
+  expenses       Expense[]
+  purchaseOrders PurchaseOrder[]
+  auditLogs      AuditLog[]
+  notifications  Notification[]
 }
+
+model BranchProduct {
+  id        String  @id @default(uuid())
+  branchId  String
+  branch    Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  stock     Int     @default(0)
+
+  @@unique([branchId, productId])
+}
+
+// ─── USER / EMPLOYEE ────────────────────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  password     String
+  name         String
+  role         Role      @default(SELLER)
+  active       Boolean   @default(true)
+  phone        String?
+  address      String?
+  document     String?
+  hireDate     DateTime?
+  salary       Float?
+  branchId     String?
+  branch       Branch?   @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sales          Sale[]
+  appointments   Appointment[]
+  orders         Order[]
+  commissions    Commission[]
+  attendance     Attendance[]
+  cashRegisters  CashRegister[]
+  auditLogs      AuditLog[]
+  notifications  Notification[]
+}
+
+// ─── ATTENDANCE ─────────────────────────────────────────────────────────────────
+
+model Attendance {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime  @default(now())
+  checkIn   DateTime
+  checkOut  DateTime?
+  hoursWorked Float?
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// ─── COMMISSIONS ────────────────────────────────────────────────────────────────
+
+model Commission {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  saleId     String?
+  sale       Sale?    @relation(fields: [saleId], references: [id], onDelete: SetNull)
+  amount     Float
+  percentage Float
+  paid       Boolean  @default(false)
+  paidAt     DateTime?
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ─── PATIENT ────────────────────────────────────────────────────────────────────
 
 model Patient {
   id          String   @id @default(uuid())
@@ -63,14 +180,38 @@ model Patient {
   address     String?
   birthDate   DateTime?
   notes       String?
+  segment     String?
+  lastVisit   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  prescriptions Prescription[]
-  sales         Sale[]
-  orders        Order[]
-  appointments  Appointment[]
+  prescriptions  Prescription[]
+  sales          Sale[]
+  orders         Order[]
+  appointments   Appointment[]
+  medicalRecords MedicalRecord[]
 }
+
+// ─── MEDICAL RECORDS ────────────────────────────────────────────────────────────
+
+model MedicalRecord {
+  id              String   @id @default(uuid())
+  patientId       String
+  patient         Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  diagnosis       String?
+  intraocularPressureOD Float?
+  intraocularPressureOI Float?
+  visualAcuityOD  String?
+  visualAcuityOI  String?
+  observations    String?
+  evolution       String?
+  professional    String?
+  date            DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ─── PRESCRIPTION ───────────────────────────────────────────────────────────────
 
 model Prescription {
   id              String   @id @default(uuid())
@@ -93,6 +234,8 @@ model Prescription {
   orders Order[]
 }
 
+// ─── SUPPLIER ───────────────────────────────────────────────────────────────────
+
 model Supplier {
   id        String    @id @default(uuid())
   name      String
@@ -103,8 +246,11 @@ model Supplier {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  products Product[]
+  products       Product[]
+  purchaseOrders PurchaseOrder[]
 }
+
+// ─── PRODUCT ────────────────────────────────────────────────────────────────────
 
 model Product {
   id          String      @id @default(uuid())
@@ -121,9 +267,13 @@ model Product {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  saleItems SaleItem[]
-  orders    Order[]
+  saleItems          SaleItem[]
+  orders             Order[]
+  purchaseOrderItems PurchaseOrderItem[]
+  branchProducts     BranchProduct[]
 }
+
+// ─── SALE ───────────────────────────────────────────────────────────────────────
 
 model Sale {
   id            String        @id @default(uuid())
@@ -139,7 +289,8 @@ model Sale {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  items SaleItem[]
+  items       SaleItem[]
+  commissions Commission[]
 }
 
 model SaleItem {
@@ -152,6 +303,8 @@ model SaleItem {
   price     Float
   subtotal  Float
 }
+
+// ─── ORDER ──────────────────────────────────────────────────────────────────────
 
 model Order {
   id              String      @id @default(uuid())
@@ -170,6 +323,8 @@ model Order {
   updatedAt       DateTime    @updatedAt
 }
 
+// ─── APPOINTMENT ────────────────────────────────────────────────────────────────
+
 model Appointment {
   id          String            @id @default(uuid())
   patientId   String
@@ -183,4 +338,110 @@ model Appointment {
   notes       String?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
+}
+
+// ─── PURCHASE ORDERS ────────────────────────────────────────────────────────────
+
+model PurchaseOrder {
+  id          String              @id @default(uuid())
+  supplierId  String
+  supplier    Supplier            @relation(fields: [supplierId], references: [id])
+  branchId    String?
+  branch      Branch?             @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  status      PurchaseOrderStatus @default(DRAFT)
+  totalAmount Float               @default(0)
+  notes       String?
+  orderedAt   DateTime?
+  receivedAt  DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  items PurchaseOrderItem[]
+}
+
+model PurchaseOrderItem {
+  id              String        @id @default(uuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product       @relation(fields: [productId], references: [id])
+  quantity        Int
+  unitCost        Float
+  subtotal        Float
+}
+
+// ─── EXPENSES ───────────────────────────────────────────────────────────────────
+
+model Expense {
+  id          String          @id @default(uuid())
+  description String
+  amount      Float
+  category    ExpenseCategory
+  branchId    String?
+  branch      Branch?         @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  date        DateTime        @default(now())
+  notes       String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+// ─── CASH REGISTER ──────────────────────────────────────────────────────────────
+
+model CashRegister {
+  id            String         @id @default(uuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id])
+  branchId      String?
+  branch        Branch?        @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  openAmount    Float
+  closeAmount   Float?
+  expectedAmount Float?
+  difference    Float?
+  openedAt      DateTime       @default(now())
+  closedAt      DateTime?
+  status        String         @default("OPEN")
+  notes         String?
+
+  movements CashMovement[]
+}
+
+model CashMovement {
+  id             String           @id @default(uuid())
+  cashRegisterId String
+  cashRegister   CashRegister     @relation(fields: [cashRegisterId], references: [id], onDelete: Cascade)
+  type           CashMovementType
+  amount         Float
+  description    String
+  createdAt      DateTime         @default(now())
+}
+
+// ─── NOTIFICATIONS ──────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String?
+  user      User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branchId  String?
+  branch    Branch?          @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  data      String?
+  createdAt DateTime         @default(now())
+}
+
+// ─── AUDIT LOG ──────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  branchId  String?
+  branch    Branch?  @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  action    String
+  module    String
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
 }
