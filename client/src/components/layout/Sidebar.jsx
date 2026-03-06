@@ -12,18 +12,66 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  UserCog,
+  Award,
+  DollarSign,
+  Wallet,
+  Building2,
+  ClipboardList,
+  ShieldCheck,
+  Bell,
+  Factory,
 } from 'lucide-react';
 import useUIStore from '../../store/uiStore';
 
-const navItems = [
-  { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/patients', icon: Users, label: 'Pacientes' },
-  { path: '/prescriptions', icon: FileText, label: 'Recetas' },
-  { path: '/inventory', icon: Package, label: 'Inventario' },
-  { path: '/sales', icon: ShoppingCart, label: 'Ventas' },
-  { path: '/orders', icon: Truck, label: 'Pedidos' },
-  { path: '/appointments', icon: Calendar, label: 'Citas' },
-  { path: '/reports', icon: BarChart3, label: 'Reportes' },
+const navSections = [
+  {
+    title: 'Principal',
+    items: [
+      { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
+      { path: '/patients', icon: Users, label: 'Pacientes' },
+      { path: '/prescriptions', icon: FileText, label: 'Recetas' },
+      { path: '/appointments', icon: Calendar, label: 'Citas' },
+    ],
+  },
+  {
+    title: 'Ventas',
+    items: [
+      { path: '/sales', icon: ShoppingCart, label: 'Ventas' },
+      { path: '/orders', icon: Truck, label: 'Pedidos Lab.' },
+      { path: '/inventory', icon: Package, label: 'Inventario' },
+    ],
+  },
+  {
+    title: 'Compras',
+    items: [
+      { path: '/suppliers', icon: Factory, label: 'Proveedores' },
+      { path: '/purchase-orders', icon: ClipboardList, label: 'Órdenes Compra' },
+    ],
+  },
+  {
+    title: 'Finanzas',
+    items: [
+      { path: '/finance', icon: DollarSign, label: 'Contabilidad' },
+      { path: '/cash-register', icon: Wallet, label: 'Caja' },
+      { path: '/commissions', icon: Award, label: 'Comisiones' },
+    ],
+  },
+  {
+    title: 'Empresa',
+    items: [
+      { path: '/employees', icon: UserCog, label: 'Empleados' },
+      { path: '/branches', icon: Building2, label: 'Sucursales' },
+      { path: '/reports', icon: BarChart3, label: 'Reportes' },
+    ],
+  },
+  {
+    title: 'Sistema',
+    items: [
+      { path: '/notifications', icon: Bell, label: 'Notificaciones' },
+      { path: '/audit-logs', icon: ShieldCheck, label: 'Auditoría' },
+    ],
+  },
 ];
 
 export default function Sidebar() {
@@ -58,34 +106,54 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={item.path === '/'}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
-                isActive
-                  ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400 font-medium'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
-              }`
-            }
-          >
-            <item.icon size={20} className="flex-shrink-0" />
+      <nav className="flex-1 py-2 px-3 overflow-y-auto">
+        {navSections.map((section, idx) => (
+          <div key={section.title} className={idx > 0 ? 'mt-1' : ''}>
             <AnimatePresence>
               {!sidebarCollapsed && (
-                <motion.span
+                <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="whitespace-nowrap text-sm"
+                  className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
                 >
-                  {item.label}
-                </motion.span>
+                  {section.title}
+                </motion.p>
               )}
             </AnimatePresence>
-          </NavLink>
+            {sidebarCollapsed && idx > 0 && (
+              <div className="my-1 mx-3 border-t border-gray-200 dark:border-gray-800" />
+            )}
+            {section.items.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.path === '/'}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group ${
+                    isActive
+                      ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400 font-medium'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+                  }`
+                }
+                title={sidebarCollapsed ? item.label : undefined}
+              >
+                <item.icon size={19} className="flex-shrink-0" />
+                <AnimatePresence>
+                  {!sidebarCollapsed && (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="whitespace-nowrap text-sm"
+                    >
+                      {item.label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </NavLink>
+            ))}
+          </div>
         ))}
       </nav>
 
