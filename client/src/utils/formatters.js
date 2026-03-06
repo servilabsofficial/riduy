@@ -79,3 +79,81 @@ export const getPaymentMethodLabel = (method) => {
   };
   return labels[method] || method;
 };
+
+export const getRoleLabel = (role) => {
+  const labels = {
+    ADMIN: 'Administrador',
+    SELLER: 'Vendedor',
+    OPTOMETRIST: 'Optometrista',
+    ACCOUNTANT: 'Contador',
+    RECEPTIONIST: 'Recepción',
+    LAB_TECH: 'Técnico Lab.',
+  };
+  return labels[role] || role;
+};
+
+export const getRoleColor = (role) => {
+  const colors = {
+    ADMIN: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    SELLER: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    OPTOMETRIST: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    ACCOUNTANT: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+    RECEPTIONIST: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    LAB_TECH: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+  };
+  return colors[role] || 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
+};
+
+export const getExpenseCategoryLabel = (cat) => {
+  const labels = {
+    RENT: 'Alquiler',
+    UTILITIES: 'Servicios',
+    SUPPLIES: 'Insumos',
+    SALARIES: 'Salarios',
+    MARKETING: 'Marketing',
+    MAINTENANCE: 'Mantenimiento',
+    OTHER: 'Otro',
+  };
+  return labels[cat] || cat;
+};
+
+export const getExpenseCategoryColor = (cat) => {
+  const colors = {
+    RENT: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+    UTILITIES: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    SUPPLIES: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+    SALARIES: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    MARKETING: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    MAINTENANCE: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+    OTHER: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+  };
+  return colors[cat] || 'bg-gray-100 text-gray-700';
+};
+
+export const getPurchaseOrderStatusLabel = (status) => {
+  const labels = {
+    DRAFT: 'Borrador',
+    SENT: 'Enviado',
+    RECEIVED: 'Recibido',
+    CANCELLED: 'Cancelado',
+  };
+  return labels[status] || status;
+};
+
+export const getPurchaseOrderStatusColor = (status) => {
+  const colors = {
+    DRAFT: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+    SENT: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    RECEIVED: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    CANCELLED: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  };
+  return colors[status] || 'bg-gray-100 text-gray-700';
+};
+
+export const formatNumber = (num) => {
+  return new Intl.NumberFormat('es-MX').format(num || 0);
+};
+
+export const formatPercent = (num) => {
+  return `${(num || 0).toFixed(1)}%`;
+};
